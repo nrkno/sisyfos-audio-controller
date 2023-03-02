@@ -73,5 +73,6 @@ jobs:
         with:
           context: .
           push: true
+          provenance: false
           labels: ${{ steps.ghcr-tag.outputs.labels }}
           tags: "${{ steps.ghcr-tag.outputs.tags }}"
