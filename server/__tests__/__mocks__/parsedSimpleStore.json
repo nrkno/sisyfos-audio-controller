@@ -3,7 +3,8 @@
         {
             "vuMeters": [
                 {
-                    "vuVal": 0
+                    "vuVal": 0,
+                    "reductionVal": 0
                 }
             ],
             "fader": [
@@ -16,67 +17,67 @@
                     "pstVoOn": false,
                     "pflOn": false,
                     "muteOn": false,
-                    "low": 0.75,
-                    "mid": 0.75,
-                    "high": 0.75,
+                    "fxParam": [
+                        { "key": 0, "value": null },
+                        { "key": 1, "value": null },
+                        { "key": 2, "value": null },
+                        { "key": 3, "value": null }
+                    ],
                     "threshold": 0.75,
                     "ratio": 0.75,
                     "monitor": 1,
-                    "showChannel": true,
-                    "snapOn": [
-                        false,
-                        false,
-                        false,
-                        false,
-                        false,
-                        false,
-                        false,
-                        false
-                    ]
+                    "showChannel": true
                 }
             ]
         }
     ],
     "channels": [
         {
-            "channel": [
+            "chMixerConnection": [
                 {
-                    "channelType": 0,
-                    "channelTypeIndex": 0,
-                    "assignedFader": 0,
-                    "fadeActive": false,
-                    "outputLevel": 0,
-                    "auxLevel": []
+                    "channel": [
+                        {
+                            "channelType": 0,
+                            "channelTypeIndex": 0,
+                            "assignedFader": 0,
+                            "fadeActive": false,
+                            "outputLevel": 0,
+                            "auxLevel": []
+                        }
+                    ]
                 }
             ]
         }
     ],
     "settings": [
         {
-            "showSnaps": false,
             "showSettings": false,
             "showChanStrip": -1,
             "showOptions": false,
             "showMonitorOptions": -1,
             "showStorage": false,
             "mixerProtocol": "genericMidi",
-            "localIp": "0.0.0.0",
-            "localOscPort": 1234,
-            "deviceIp": "0.0.0.0",
-            "devicePort": 10024,
-            "protocolLatency": 20,
+            "numberOfMixers": 1,
+            "mixers": [
+                {
+                    "mixerProtocol": "sslSystemT",
+                    "deviceIp": "0.0.0.0",
+                    "devicePort": 10024,
+                    "protocolLatency": 220,
+                    "mixerMidiInputPort": "",
+                    "mixerMidiOutputPort": "",
+                    "numberOfChannelsInType": [8],
+                    "numberOfAux": 0,
+                    "nextSendAux": -1,
+                    "mixerOnline": false,
+                    "localIp": "0.0.0.0",
+                    "localOscPort": 1234
+                }
+            ],
             "enableRemoteFader": false,
-            "mixerMidiInputPort": "",
-            "mixerMidiOutputPort": "",
             "remoteFaderMidiInputPort": "",
             "remoteFaderMidiOutputPort": "",
-            "numberOfChannelsInType": [
-                8
-            ],
             "numberOfFaders": 8,
-            "numberOfAux": 0,
-            "nextSendAux": -1,
-            "numberOfSnaps": 8,
             "voLevel": 20,
             "autoResetLevel": 10,
             "automationMode": true,
@@ -84,7 +85,9 @@
             "fadeTime": 60,
             "voFadeTime": 200,
             "showPfl": false,
-            "mixerOnline": false
+            "serverOnline": true,
+            "currentPage": "undefined",
+            "customPages": "undefined"
         }
     ]
 }

@@ -1,0 +1,135 @@
+.channels-body {
+    display: flex;
+    flex-direction: row;
+    background-color: black;
+    min-height: 760px;
+}
+
+.channels-body > .channels-body-inner {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 2;
+    overflow-x: auto;
+    height: calc(100vh);
+}
+
+.channels-body > .closedChanStrip {
+    /* margin-left: -630px; */
+    transition: transform 300ms;
+    position: absolute;
+    z-index: 2;
+    transform: translateX(-100%);
+}
+
+.channels-body > .openChanStrip {
+    /* margin-left: 0px;
+    transition: margin 800ms; */
+    transition: transform 300ms;
+    transform: unset;
+}
+
+.button {
+    outline: none;
+    -moz-outline: none;
+    color: white;
+    height: 90px;
+    width: 90px;
+    border-color: rgb(71, 71, 71);
+    background-color: rgb(53, 53, 53);
+    margin-left: 5px;
+    margin-right: 4px;
+    margin-top: 10px;
+    border-radius: 7px;
+}
+.button.half {
+    height: 60px;
+}
+.button.active {
+    background-color: #2f475b;
+}
+
+.button-all-manual.all {
+    background-color: #af39b9;
+}
+.button-all-manual.any {
+    border-color: #af39b9;
+}
+
+.channels-mix-body {
+    display: flex;
+    flex-direction: column;
+
+    width: 100px;
+    min-height: 950px;
+    max-height: calc(100vh - 10px);
+    color: white;
+    background: linear-gradient(
+        #2f2f2f 0px,
+        #2f2f2f 790px,
+        rgb(0, 0, 0) 1px,
+        #2f2f2f 800px,
+        #2f2f2f 100%
+    );
+    margin: 4px;
+    border-radius: 9px;
+    border-color: rgb(80, 80, 80);
+    border-style: solid;
+    border-width: 1px;
+}
+.channels-mix-body > .mid {
+    flex-grow: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.channels-mix-body > .bot {
+    overflow-y: auto;
+}
+
+.channels-show-mixer-online {
+    background-color: rgb(219, 1, 1);
+}
+
+.channels-show-mixer-online.connected {
+    background-color: rgb(9, 107, 0);
+}
+
+.channels-show-settings-button {
+}
+.channels-show-settings-button.active {
+    background-color: #2f475b;
+}
+
+.channels-show-storage-button {
+}
+
+.channels-mix-button {
+    background-color: rgb(65, 65, 65);
+}
+
+.channels-clear-button {
+    background-color: rgb(19, 19, 19);
+}
+
+.channels-snap-mix-body {
+    /* margin-top: 58px; */
+}
+
+.channels-snap-mix-line {
+    margin-top: 4px;
+    background-color: #2b2b2b;
+}
+
+.channels-snap-mix-button {
+    background-color: rgb(199, 202, 0);
+    color: rgb(44, 44, 44);
+    margin-left: 20px;
+    height: 25px;
+    width: 60px;
+    border-color: rgb(99, 99, 99);
+    white-space: nowrap;
+}
+
+.channels-snap-mix-line:last-of-type {
+    margin-bottom: 51px;
+}

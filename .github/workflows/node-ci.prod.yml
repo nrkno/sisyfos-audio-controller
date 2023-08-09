@@ -1,0 +1,335 @@
+#######################################################################################################################
+#
+#   Node CI - Production
+#
+#   The workflow ensures quality for the build, builds the project and publishes it to the configured destinations.
+#   There are the following destinations:
+#
+#   [Github Release]
+#     The destination is only triggered if the secret 'RELEASE_TO_GITHUB' is set to a non-empty value.
+#
+#   [NPM]
+#     The destination is only triggered if the secret 'NPM_TOKEN' is provided.
+#
+#   [Docker Hub]
+#     The destination is only triggered if the secrets 'DOCKER_USERNAME' and 'DOCKER_PASSWORD' are
+#     provided.
+#
+#######################################################################################################################
+
+name: Prod Node CI
+
+env:
+    node-version: 16
+    node-package-manager: yarn
+
+# on:
+#  push:
+#    branches:
+#      - "master"
+#      - "main"
+
+jobs:
+    cache-dependencies:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - uses: ./.github/actions/cache
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+    prebuild:
+        runs-on: ubuntu-latest
+        needs: cache-dependencies
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - uses: ./.github/actions/cache
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+            - name: Build
+              run: yarn build
+
+    test:
+        runs-on: ubuntu-latest
+        needs: cache-dependencies
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+
+            - uses: ./.github/actions/test
+
+    # validate-dependencies:
+    #   runs-on: ubuntu-latest
+    #   steps:
+    #     - name: Access repository
+    #       uses: actions/checkout@v2
+    #     - uses: ./.github/actions/validate-dependencies
+
+    bump-version:
+        runs-on: ubuntu-latest
+        needs:
+            - prebuild
+            - test
+            - validate-dependencies
+        outputs:
+            tag_version: ${{ steps.tag_version.outputs.new_tag || steps.tag_version.outputs.previous_tag }}
+            version: ${{ steps.tag_version.outputs.new_version || steps.tag_version.outputs.previous_version }}
+            changelog: ${{ steps.tag_version.outputs.changelog }}
+            bumped: ${{ steps.tag_version.outputs.new_tag != '' }}
+            commit_sha: ${{ steps.commit_sha.outputs.commit_sha }}
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - name: Configure committer
+              run: |
+                  git config user.name "${{ github.event.pusher.name }}"
+                  git config user.email "${{ github.event.pusher.email }}"
+            - name: Bump version and push tag
+              id: tag_version
+              uses: mathieudutour/github-tag-action@v5.6
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  default_bump: false
+            - name: Update package.json
+              if: steps.tag_version.outputs.new_tag != ''
+              uses: jossef/action-set-json-field@v1
+              with:
+                  file: package.json
+                  field: version
+                  value: ${{ steps.tag_version.outputs.new_version }}
+            - name: Update CHANGELOG.md
+              env:
+                  changes: ${{ steps.tag_version.outputs.changelog }}
+              run: |
+                  echo "$changes" > /tmp/tmp-changelog.md
+                  [ -f CHANGELOG.md ] && cat CHANGELOG.md >> /tmp/tmp-changelog.md
+                  mv /tmp/tmp-changelog.md CHANGELOG.md
+
+            - name: Commit and push changes to package.json and CHANGELOG.md
+              id: commit_sha
+              if: steps.tag_version.outputs.new_tag != ''
+              uses: EndBug/add-and-commit@v7
+              with:
+                  add: "['package.json', 'CHANGELOG.md']"
+
+    create-pull-request-develop:
+        runs-on: ubuntu-latest
+        if: needs.bump-version.outputs.bumped == 'true'
+        needs:
+            - bump-version
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - name: Pull request to develop
+              id: develop
+              continue-on-error: true
+              uses: repo-sync/pull-request@v2
+              with:
+                  destination_branch: 'develop'
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  pr_label: 'release, automated-pr'
+                  pr_title: 'Release ${{ needs.bump-version.outputs.version }} -> develop'
+            - name: Report status
+              env:
+                  report: ${{ toJSON(steps.develop.outcome) }} - ${{ toJSON(steps.develop.conclusion) }}
+              run: echo $report
+
+    build:
+        runs-on: ubuntu-latest
+        needs:
+            - bump-version
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ needs.bump-version.outputs.commit_sha }}
+            - name: Ensure commits from bump-version
+              run: git pull
+            - uses: ./.github/actions/cache
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+            - name: Build
+              run: yarn build
+            - name: Upload client build artifact
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}-client
+                  path: client/dist
+            - name: Upload server build artifact
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}-server
+                  path: server/dist
+
+    build-desktop:
+        runs-on: windows-latest
+        needs:
+            - bump-version
+            - build
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ needs.bump-version.outputs.commit_sha }}
+            - name: Ensure commits from bump-version
+              run: git pull
+            - uses: ./.github/actions/cache
+            - uses: actions/download-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}-client
+                  path: client/dist
+            - uses: actions/download-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}-server
+                  path: server/dist
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+            - name: Build desktop
+              run: yarn build:desktop
+            - name: Upload desktop build artifact
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}-desktop
+                  path: desktop/dist
+
+    check-github-release:
+        runs-on: ubuntu-latest
+        needs: build-desktop
+        outputs:
+            defined: ${{ steps.release.outputs.defined == 'true' }}
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - name: Check if is set to release
+              id: release
+              uses: ./.github/actions/check-secret
+              with:
+                  secret: ${{ secrets.RELEASE_TO_GITHUB }}
+
+    publish-github-release:
+        runs-on: ubuntu-latest
+        if: needs.bump-version.outputs.bumped == 'true' && needs.check-github-release.outputs.defined == 'true'
+        needs:
+            - bump-version
+            - check-github-release
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ needs.bump-version.outputs.commit_sha }}
+            - name: Ensure commits from bump-version
+              run: git pull
+            - uses: actions/download-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}-desktop
+                  path: desktop/dist
+            - name: Compress artifact to zip
+              uses: papeloto/action-zip@v1
+              with:
+                  files: dist
+                  dest: '${{ github.event.repository.name }}-${{ needs.bump-version.outputs.version }}.zip'
+            - name: Create Github release with desktop exe
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: Release ${{ needs.bump-version.outputs.tag_version }}
+                  tag_name: ${{ needs.bump-version.outputs.tag_version }}
+                  body: ${{ needs.bump-version.outputs.changelog }}
+                  files: |
+                      desktop/dist/*.exe
+                      desktop/dist/*.dmg
+
+    check-npm-token:
+        runs-on: ubuntu-latest
+        needs: build
+        outputs:
+            defined: ${{ steps.token.outputs.defined == 'true' }}
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - name: Check if has username
+              id: token
+              uses: ./.github/actions/check-secret
+              with:
+                  secret: ${{ secrets.NPM_TOKEN }}
+
+    publish-npm-package:
+        runs-on: ubuntu-latest
+        if: needs.check-npm-token.outputs.defined == 'true'
+        needs:
+            - bump-version
+            - check-npm-token
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - name: Configure publisher
+              run: |
+                  git config user.name "${{ github.event.pusher.name }}"
+                  git config user.email "${{ github.event.pusher.email }}"
+            - name: Download artifact
+              uses: actions/download-artifact@v2
+              with:
+                  name: ${{ github.event.repository.name }}
+                  path: dist
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: '16.x'
+                  registry-url: 'https://registry.npmjs.org'
+            - name: Publish package
+              run: yarn publish --access=public --tag latest --new-version "${{ needs.bump-version.outputs.version }}"
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    check-docker-credentials:
+        runs-on: ubuntu-latest
+        needs: build
+        outputs:
+            defined: ${{ steps.username.outputs.defined == 'true' && steps.password.outputs.defined == 'true' }}
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+            - name: Check if has username
+              id: username
+              uses: ./.github/actions/check-secret
+              with:
+                  secret: ${{ secrets.DOCKER_USERNAME }}
+            - name: Check if has password
+              id: password
+              uses: ./.github/actions/check-secret
+              with:
+                  secret: ${{ secrets.DOCKER_PASSWORD }}
+
+    publish-docker-image:
+        runs-on: ubuntu-latest
+        if: needs.check-docker-credentials.outputs.defined == 'true'
+        needs:
+            - bump-version
+            - check-docker-credentials
+        steps:
+            - name: Access repository
+              uses: actions/checkout@v2
+
+            - name: Extract version for tags
+              id: version
+              uses: ./.github/actions/extract-version
+              with:
+                  version: ${{ needs.bump-version.outputs.version }}
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v1
+              with:
+                  username: ${{ secrets.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_PASSWORD }}
+
+            - name: Build and push
+              uses: docker/build-push-action@v2
+              with:
+                  context: .
+                  push: true
+                  tags: |
+                      "tv2media/${{ github.event.repository.name }}:latest"
+                      "tv2media/${{ github.event.repository.name }}:${{ steps.version.outputs.version }}"
+                      "tv2media/${{ github.event.repository.name }}:${{ steps.version.outputs.major }}"
+                      "tv2media/${{ github.event.repository.name }}:${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}"
+

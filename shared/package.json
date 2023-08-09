@@ -1,0 +1,12 @@
+{
+  "name": "shared",
+  "version": "0.0.0",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "redux": "^4.2.1"
+  }
+}

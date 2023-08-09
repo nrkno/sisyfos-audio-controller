@@ -1,15 +1,20 @@
-import indexReducer from  '../reducers/indexReducer'
+import indexReducer from '../../shared/src/reducers/indexReducer'
 
-let fs = require('fs')
-const parsedEmptyStoreJSON = fs.readFileSync('server/__tests__/__mocks__/parsedEmptyStore.json')
+import fs from 'fs'
+const parsedEmptyStoreJSON = fs.readFileSync(
+    '__tests__/__mocks__/parsedEmptyStore.json',
+    'utf-8'
+)
 
 describe('Test initialize store', () => {
-  let parsedInitialStore = JSON.parse(parsedEmptyStoreJSON)
+    let parsedInitialStore = JSON.parse(parsedEmptyStoreJSON)
     it('should return the initial state of the whole Store', () => {
-      // ** Uncomment to update initial settings state:
-      // let data = indexReducer(undefined, {type: ''})
-      // fs.writeFileSync('server/__tests__/__mocks__/parsedEmptyStore-UPDATE.json', JSON.stringify(data))
+        // ** Uncomment to update initial settings state:
+        // let data = indexReducer(undefined, {type: ''})
+        // fs.writeFileSync('__tests__/__mocks__/parsedEmptyStore-UPDATE.json', JSON.stringify(data))
 
-      expect(indexReducer(JSON.parse(parsedEmptyStoreJSON), {type: ''})).toEqual(parsedInitialStore)
+        expect(
+            indexReducer(JSON.parse(parsedEmptyStoreJSON), { type: '' })
+        ).toEqual(parsedInitialStore)
     })
 })

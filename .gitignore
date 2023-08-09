@@ -8,9 +8,10 @@ builds/
 dist/
 coverage/
 node_modules/
-public/
+release/
 *.compiled.*
 settings.json
+pages.json
 *.shot
 *.ccg
 
@@ -57,3 +58,6 @@ ehthumbs.db
 # Windows shortcuts #
 #####################
 *.lnk
+
+# Exclude JetBrains specific files
+.idea
