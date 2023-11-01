@@ -27,6 +27,7 @@ import {
     storeSetChLabel,
 } from '../../../../shared/src/actions/channelActions'
 import { storeSetMixerOnline } from '../../../../shared/src/actions/settingsActions'
+import { EmberElement, NumberedTreeNode } from 'emberplus-connection/dist/model'
 
 export class EmberMixerConnection {
     mixerProtocol: IMixerProtocol
@@ -240,7 +241,10 @@ export class EmberMixerConnection {
             )
             if (!node) return
 
-            await this.emberConnection.subscribe(node, cb)
+            await this.emberConnection.subscribe(
+                node as NumberedTreeNode<EmberElement>,
+                cb
+            )
 
             cb(node)
         } catch (e) {
