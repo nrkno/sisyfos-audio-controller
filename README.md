@@ -1,38 +1,45 @@
-# Sisyfos Audio Controller
+# Sofie Sisyfos Audio Controller
 
-[![Node CI](https://github.com/tv2/sisyfos-audio-controller/actions/workflows/deploy-image.yml/badge.svg)](https://github.com/tv2/sisyfos-audio-controller/actions/workflows/deploy-image.yml)
+This is the _Sisyfos Audio Controller_ application of the [**Sofie** TV Automation System](https://github.com/nrkno/Sofie-TV-automation/), an audiomixer control build for intelligent automation.
 
-## Audiomixer control build for intelligent automation.
+### Repository-specific Info for Developers
+* [Developer Info](DEVELOPER.md)
+* [Contribution Guidelines](CONTRIBUTING.md)
 
+### General Sofie System Info
+* [Documentation](https://nrkno.github.io/sofie-core/)
+* [Releases](https://nrkno.github.io/sofie-core/releases)
+
+---
+## Usage
 You use the fader for the level, and PGM on/off for fade-in/out.
-TAKE NEXT crossfades from NEXT to PGM
+TAKE NEXT crossfades from NEXT to PGM.
+It's fast to see what faders are on air, and whether they are PGM level or Voiceover level.
 
-It´s fast to see what faders are on-aie, and whether they are PGM level or Voiceover level
-
-### GUI with open channelstrip:
+### GUI with Open Channel Strip
 
 <img src="Docs/pix/sisyfos.png">
 
-### These are the functions on each channel:
+### Functions per Channel
 
 <img src="Docs/pix/SisyfosChanneldescription.jpg">
 
-### These are the functions on the channelstrip:
+### Functions on the Channel Strip
 
-(You open the channelstrip by clicking on the channel label)
-The features on the channelstrip depends on the Mixer Protocol.
+(You open the Channel Strip by clicking on the channel label)
+The features on the Channel Strip depends on the Mixer Protocol.
 
 <img src="Docs/pix/SisyfosChannelStripdescription.jpg">
 
-### Full Channelstrip:
+### Full Channel Strip
 
-(You open the channelstrip by clicking on the "Full Ch.Strip" in the normal channelstrip)
+(You open the channel strip by clicking on the "Full Ch.Strip" in the normal channel strip).
 
-The Advanced channelstrip has all the features the seleced Mixer Protol supports. (Example: Midas M32)
+The advanced channel strip has all the features the seleced mixer protocol supports. (Example: Midas M32.)
 
 <img src="Docs/pix/AdvancedChannelStrip.png">
 
-### If you need a MiniMonitorView for a client:
+### MiniMonitorView for a Client
 
 Run webpage with
 
@@ -42,7 +49,7 @@ localhost/?view=minimonitor
 
 <img src="Docs/pix/minimonitorview.png">
 
-### If you need a Microphone Tally View for a client:
+### Microphone Tally View for a Client
 
 Run webpage with
 
@@ -58,9 +65,9 @@ Routing of Faders to multiple channels or a single channel are possible. This wa
 
 ### Load/Save Routing
 
-Routing setups can be stored in STORAGE. So it´s possible to have different Routings dependent of what setup the Audio mixer is using.
+Routing setups can be stored in STORAGE. So it's possible to have different Routings dependent of what setup the Audio mixer is using.
 
-### Run as Docker: (On linux)
+### Run as Docker (on Linux)
 
 ```
 docker pull tv2media/sisyfos-audio-controller:develop
@@ -68,7 +75,7 @@ docker volume create sisyfos-vol
 sudo docker run --mount source=sisyfos-vol,target=/opt/sisyfos-audio-controller/storage --network="host" --restart always tv2media/sisyfos-audio-controller:develop
 ```
 
-### Run as Docker: (On windows)
+### Run as Docker (on Windows)
 
 ```
 docker pull tv2media/sisyfos-audio-controller:develop
@@ -76,7 +83,7 @@ docker volume create sisyfos-vol
 docker run --mount source=sisyfos-vol,target=/opt/sisyfos-audio-controller/storage -p 1176:1176 -p 5255:5255 --restart always tv2media/sisyfos-audio-controller:develop
 ```
 
-### Install Local node host:
+### Install Local Node Host
 
 (Be aware that a server reload will quit server and you need an external source to restart)
 
@@ -88,7 +95,7 @@ yarn build
 yarn start
 ```
 
-### Log levels:
+### Log Levels
 
 When running Sisyfos you can define the log level by setting the environment variable `LOG_LEVEL` to one of the following log levels:
 
@@ -98,13 +105,13 @@ When running Sisyfos you can define the log level by setting the environment var
 -   debug (info level plus: data send and received from Audiomixer)
 -   trace (debug level plus: data send and received from Automation protocol)
 
-### Open GUI in browser:
+### Open GUI in a Browser
 
 ```
 localhost:1176 (or whatever ip you use for Sisyfos Nodejs/Docker)
 ```
 
-#### Important - To enable settings:
+#### Important — To Enable Settings
 
 ```
 localhost:1176/?settings=1
@@ -122,15 +129,15 @@ If you want to disable the VU meters:
 localhost:1176/?vu=0
 ```
 
-## Settings:
+## Settings
 
-### Show PFL Controls:
+### Show PFL Controls
 
 As NEXT has been implemented, and PFL usually only work on on channel at a time, the PFL is only working correctly on 1:1 routed setups (And with the CasparCG protocol)
 
 (Mixer presets are stored in MixerProtocolPresets.js)
 
-### Following preset name are possible:
+### Possible Preset Names
 
 -   CasparCG
     -   use storage/default-casparcg.ccg as template and place you own file in storage folder.
@@ -149,7 +156,7 @@ As NEXT has been implemented, and PFL usually only work on on channel at a time,
 -   Ardour Master
     -   OSC protocol for Ardour (www.ardour.org)
     -   Port 3819
-    -   The volume change in Ardour is on it´s channel faders.
+    -   The volume change in Ardour is on it's channel faders.
     -   Todo:
         -   Meter calibration
 -   SSL System T - Broadcast Mixer
@@ -179,7 +186,7 @@ As NEXT has been implemented, and PFL usually only work on on channel at a time,
     -   channel 1 to 24 fader level from Sisyfos TO mixer
     -   No 2 way support for now
 
-## Skaarhoj panels:
+## Skaarhoj Panels
 
 Skaarhoj in RAW panel mode is supported for rotary buttons including labels.
 
@@ -190,102 +197,106 @@ Skaarhoj in RAW panel mode is supported for rotary buttons including labels.
 
 The monitor sends are the same as those on the Channel Strip.
 
-## Automation Support:
+## Automation Support
 
-It´s possible to control the Producers-Audio-Mixer from an automationsystem, for it to act as middleware.
+It's possible to control the Producers-Audio-Mixer from an automationsystem, for it to act as middleware.
 
-## Set state:
+## Setting State
 
 To set the state send these OSC commands from you Automation to ProducersAudioMixer Port: 5255:
 
-#### Set channel to PGM (optional: indiviaul fadetime):
+#### Set Channel to PGM (Optional: Individual Fadetime)
 
 (the integer defines: 0 - Off, 1 - Pgm On, 2 - Voice Over)
 (if second is missing it will take default fade value)
 /ch/1/mix/pgm - integer: { 0, 1 or 2 } - float { fadetime in ms }
 
-#### Set channel to PST:
+#### Set Channel to PST
 
 /ch/1/mix/pst - integer: { 0, 1 or 2 } (the integer defines: 0 - Off, 1 - Pgm On, 2 - Voice Over)
 
-#### Mute channel:
+#### Mute Channel
 
 /ch/1/mute - integer: { 0, 1 } (the integer defines: 0 - Mute off, 1 - Mute On)
 
-#### Set channel faderlevel:
+#### Set Channel Fader Level
 
 /ch/1/mix/faderlevel - float {between 0 and 1}
 
-#### Set channel label:
+#### Set Channel Label
 
 /ch/1/label - string {name of channel}
 
-#### Inject Command:
+#### Inject Command
 
 Pass a command directly from Automation to Audiomixer
 /inject
 
-#### Crossfade between PGM and PST:
+#### Crossfade Between PGM and PST
 
 /take
 
-#### Set snap 1-xx to PST:
+#### Set Snap 1-xx to PST
 
 /snap/1
 
-#### Fade all channels to black (mute)
+#### Fade All Channels to Black (mute)
 
 /fadetoblack
 
-#### Clear all pst buttons
+#### Clear All PST Buttons
 
 /clearpst
 
-#### Hide or show channel strips on GUI:
+#### Hide or Show Channel Strips in GUI
 
 /ch/{value1}/visible - integer { 0 or 1 }
 
-## Get state:
+## Get State
 
-#### Get full state of all channels:
+#### Get Full State of All Channels
 
 /state/full - returns a json string with an array of channels: { pgmOn: boolean, pstOn: boolean, faderLevel: boolean }
 
-#### Get state channel PGM:
+#### Get State of Channel PGM
 
 /state/ch/1/mix/pgm - returns pgm state integer { 0 or 1 }
 
-#### get state channel PST:
+#### Get State of Channel PST
 
 /state/ch/1/mix/pst - returns pgm state integer { 0 or 1 }
 
-#### Get state channel faderlevel:
+#### Get State of Channel Fader Level
 
 /state/ch/1/mix/faderlevel - float {between 0 and 1}
 
-#### get state channel Mute:
+#### Get State of Channel Mute
 
 /state/ch/1/mute - returns mute state integer { 0 or 1 }
 
-#### Get state group PGM:
+#### Get State of Group PGM
 
 /state/ch/1/mix/pgm - returns pgm state integer { 0 or 1 }
 
-#### get state group PST:
+#### Get State of Group PST
 
 /state/ch/1/mix/pst - returns pgm state integer { 0 or 1 }
 
-#### Get state group faderlevel:
+#### Get State of Group Fader Level
 
 /state/ch/1/mix/faderlevel - float {between 0 and 1}
 
-## Check connectivity
+## Check Connectivity
 
 /ping/{value}
 _In response to a ping, sisyfos will reply with /pong and the provided value OR 'offline' if Audiomixer is not connected_
 
-## Localization:
+## Localization
 
 Localization can be found in: /client/i18n.ts
 
 If we end up with a huge amount of translations we move the translations to seperate files, but for now we keep it simple.
+
+---
+
+_The NRK logo is a registered trademark of Norsk rikskringkasting AS. The license does not grant any right to use, in any way, any trademarks, service marks or logos of Norsk rikskringkasting AS._
