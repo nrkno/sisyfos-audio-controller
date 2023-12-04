@@ -1,5 +1,5 @@
 import { Express } from 'express'
-import { state } from './reducers/store'
+import { state } from '../reducers/store'
 
 /**
  * Health report as described in internal NRK blaabok spec
