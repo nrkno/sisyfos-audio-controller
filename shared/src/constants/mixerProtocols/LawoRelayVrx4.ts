@@ -1,7 +1,7 @@
-import { IMixerProtocol, emptyMixerMessage } from '../MixerProtocolInterface'
+import { MixerProtocol, emptyMixerMessage, MixerConnectionTypes } from '../MixerProtocolInterface'
 
-export const LawoRelayVrx4: IMixerProtocol = {
-    protocol: 'EMBER',
+export const LawoRelayVrx4: MixerProtocol = {
+    protocol: MixerConnectionTypes.EMBER,
     label: 'Lawo Relay VRX4 - client',
     presetFileExtension: '',
     loadPresetCommand: [emptyMixerMessage()],

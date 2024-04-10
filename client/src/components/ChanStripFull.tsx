@@ -5,11 +5,9 @@ import '../assets/css/ChanStripFull.css'
 import { Store } from 'redux'
 import { connect } from 'react-redux'
 import {
-    storeShowOptions,
-    storeShowMonitorOptions,
-    storeShowChanStripFull,
+    SettingsActionTypes,
 } from '../../../shared/src/actions/settingsActions'
-import { IFader } from '../../../shared/src/reducers/fadersReducer'
+import { Fader } from '../../../shared/src/reducers/fadersReducer'
 import {
     SOCKET_SET_FX,
     SOCKET_SET_AUX_LEVEL,
@@ -19,21 +17,21 @@ import {
 import ReductionMeter from './ReductionMeter'
 import ClassNames from 'classnames'
 import { fxParamsList } from '../../../shared/src/constants/MixerProtocolInterface'
-import { IChannel } from '../../../shared/src/reducers/channelsReducer'
+import { Channel } from '../../../shared/src/reducers/channelsReducer'
 import { getFaderLabel } from '../utils/labels'
 import ChanStripEq from './ChanStripEq'
 
-interface IChanStripFullInjectProps {
+interface ChanStripFullInjectProps {
     label: string
     selectedProtocol: string
     numberOfChannelsInType: Array<number>
-    channel: IChannel[]
-    fader: IFader[]
+    channel: Channel[]
+    fader: Fader[]
     auxSendIndex: number
     offtubeMode: boolean
 }
 
-interface IChanStripFullProps {
+interface ChanStripFullProps {
     faderIndex: number
 }
 
@@ -41,36 +39,40 @@ interface IChanStripFullProps {
 const DEL_VALUES = [10, 1, -1, -10]
 
 class ChanStripFull extends React.PureComponent<
-    IChanStripFullProps & IChanStripFullInjectProps & Store
+    ChanStripFullProps & ChanStripFullInjectProps & Store
 > {
-    canvas: HTMLCanvasElement | undefined
 
     constructor(props: any) {
         super(props)
     }
 
-    shouldComponentUpdate(
-        nextProps: IChanStripFullInjectProps & IChanStripFullProps
-    ) {
-        if (nextProps.faderIndex > -1) {
-            return true
-        } else {
-            return false
-        }
-    }
-
     handleShowRoutingOptions() {
-        this.props.dispatch(storeShowOptions(this.props.faderIndex))
-        this.props.dispatch(storeShowChanStripFull(-1))
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_OPTION,
+            channel: this.props.faderIndex,
+        })
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_CHAN_STRIP_FULL,
+            channel: -1,
+        })
     }
 
     handleShowMonitorOptions() {
-        this.props.dispatch(storeShowMonitorOptions(this.props.faderIndex))
-        this.props.dispatch(storeShowChanStripFull(-1))
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_MONITOR_OPTIONS,
+            channel: this.props.faderIndex,
+        })
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_CHAN_STRIP_FULL,
+            channel: -1,
+        })
     }
 
     handleClose = () => {
-        this.props.dispatch(storeShowChanStripFull(-1))
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_CHAN_STRIP_FULL,
+            channel: -1,
+        })
     }
     handleInputSelect(selected: number) {
         window.socketIoClient.emit(SOCKET_SET_INPUT_SELECTOR, {
@@ -175,24 +177,21 @@ class ChanStripFull extends React.PureComponent<
                 <div className="chstrip-full-mini-text">{maxLabel + ' dB'}</div>
                 {window.mixerProtocol.channelTypes[0].toMixer
                     .CHANNEL_INPUT_GAIN ? (
-                    <React.Fragment>
-                        <ReactSlider
-                            className="chstrip-full-fader"
-                            thumbClassName="chstrip-full-thumb"
-                            orientation="vertical"
-                            invert
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            value={
-                                this.props.fader[this.props.faderIndex]
-                                    .inputGain
-                            }
-                            onChange={(event: any) => {
-                                this.handleInputGain(event)
-                            }}
-                        />
-                    </React.Fragment>
+                    <ReactSlider
+                        className="chstrip-full-fader"
+                        thumbClassName="chstrip-full-thumb"
+                        orientation="vertical"
+                        invert
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={
+                            this.props.fader[this.props.faderIndex].inputGain
+                        }
+                        onChange={(event: any) => {
+                            this.handleInputGain(event)
+                        }}
+                    />
                 ) : null}
                 <div className="chstrip-full-mini-text">{minLabel + ' dB'}</div>
             </div>
@@ -212,9 +211,10 @@ class ChanStripFull extends React.PureComponent<
             <React.Fragment>
                 {this.fxParamFader(fxParamsList.DelayTime)}
                 <div className="chstrip-full-delay-buttons">
-                    {DEL_VALUES.map((value: number) => {
+                    {DEL_VALUES.map((value: number, index: number) => {
                         return (
                             <button
+                                key={index}
                                 className="delayTime"
                                 onClick={() => {
                                     this.changeDelay(
@@ -376,7 +376,6 @@ class ChanStripFull extends React.PureComponent<
             return (
                 <div className="chstrip-full-parameters">
                     {hasInput && (
-                        <React.Fragment>
                             <div className="chstrip-full-content-group">
                                 <div className="title">INPUT</div>
                                 <div className="chstrip-full-content">
@@ -384,9 +383,7 @@ class ChanStripFull extends React.PureComponent<
                                     {this.inputGain()}
                                 </div>
                             </div>
-                        </React.Fragment>
                     )}
-                    <React.Fragment>
                         {this.doesParamExists(fxParamsList.GainTrim) ? (
                             <div className="chstrip-full-content-group">
                                 <div className="title">INPUT</div>
@@ -395,7 +392,7 @@ class ChanStripFull extends React.PureComponent<
                                 </div>
                             </div>
                         ) : (
-                            <React.Fragment></React.Fragment>
+                            <div/>
                         )}
                         {this.doesParamExists(fxParamsList.CompThrs) ? (
                             <div className="chstrip-full-content-group">
@@ -432,7 +429,7 @@ class ChanStripFull extends React.PureComponent<
                                 </div>
                             </div>
                         ) : (
-                            <React.Fragment></React.Fragment>
+                            <div/>
                         )}
                         {this.doesParamExists(fxParamsList.DelayTime) ? (
                             <div className="chstrip-full-content-group">
@@ -465,7 +462,6 @@ class ChanStripFull extends React.PureComponent<
                                 </ul>
                             </div>
                         </div>
-                    </React.Fragment>
                 </div>
             )
         } else {
@@ -481,7 +477,7 @@ class ChanStripFull extends React.PureComponent<
                         <ChanStripEq faderIndex={this.props.faderIndex} />
                     </div>
                 ) : (
-                    <React.Fragment></React.Fragment>
+                    <div/>
                 )}
             </React.Fragment>
         )
@@ -527,8 +523,8 @@ class ChanStripFull extends React.PureComponent<
     }
 }
 
-const mapStateToProps = (state: any, props: any): IChanStripFullInjectProps => {
-    let inject: IChanStripFullInjectProps = {
+const mapStateToProps = (state: any, props: any): ChanStripFullInjectProps => {
+    let inject: ChanStripFullInjectProps = {
         label: '',
         selectedProtocol: state.settings[0].mixers[0].mixerProtocol,
         numberOfChannelsInType:
@@ -553,6 +549,6 @@ const mapStateToProps = (state: any, props: any): IChanStripFullInjectProps => {
     return inject
 }
 
-export default connect<any, IChanStripFullInjectProps>(mapStateToProps)(
+export default connect<any, ChanStripFullInjectProps>(mapStateToProps)(
     ChanStripFull
 ) as any

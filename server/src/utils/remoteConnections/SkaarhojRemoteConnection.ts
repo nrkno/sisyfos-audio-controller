@@ -3,20 +3,19 @@ import net from 'net'
 import { store, state } from '../../reducers/store'
 import { mixerGenericConnection } from '../../mainClasses'
 
-import { storeFaderLevel } from '../../../../shared/src/actions/faderActions'
+import { FaderActionTypes } from '../../../../shared/src/actions/faderActions'
 
 //Utils:
 import {
-    IRemoteProtocol,
+    RemoteProtocol,
     RemoteFaderPresets,
 } from '../../../../shared/src/constants/remoteProtocols/SkaarhojProtocol'
 import { MixerProtocolPresets } from '../../../../shared/src/constants/MixerProtocolPresets'
 import { logger } from '../logger'
-import { storeSetAuxLevel } from '../../../../shared/src/actions/channelActions'
+import { ChannelActionTypes } from '../../../../shared/src/actions/channelActions'
 
 export class SkaarhojRemoteConnection {
-    store: any
-    remoteProtocol: IRemoteProtocol
+    remoteProtocol: RemoteProtocol
     mixerProtocol: any
     clientList: any[]
 
@@ -120,7 +119,11 @@ export class SkaarhojRemoteConnection {
             }
             //Fader changed:
             logger.debug(`Received Fader ${faderIndex + 1} Level : ${level}`)
-            store.dispatch(storeFaderLevel(faderIndex, level))
+            store.dispatch({
+                type: FaderActionTypes.SET_FADER_LEVEL,
+                faderIndex: faderIndex,
+                level: level,
+            })
             mixerGenericConnection.updateOutLevel(faderIndex, -1)
             global.mainThreadHandler.updatePartialStore(faderIndex)
             this.updateRemoteFaderState(faderIndex, level)
@@ -188,7 +191,13 @@ export class SkaarhojRemoteConnection {
                 chIndex + 1
             } Level: ${level}`
         )
-        store.dispatch(storeSetAuxLevel(0, chIndex, auxSendIndex, level))
+        store.dispatch({
+            type: ChannelActionTypes.SET_AUX_LEVEL,
+            mixerIndex: 0,
+            channel: chIndex,
+            auxIndex: auxSendIndex,
+            level: level,
+        })
         mixerGenericConnection.updateAuxLevel(chIndex, auxSendIndex + 1)
         global.mainThreadHandler.updateFullClientStore()
         this.updateRemoteAuxPanel(panelNumber)

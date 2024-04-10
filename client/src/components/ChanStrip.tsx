@@ -2,15 +2,12 @@ import React from 'react'
 import ReactSlider from 'react-slider'
 
 import '../assets/css/ChanStrip.css'
-import { Store } from 'redux'
+import {  Store } from 'redux'
 import { connect } from 'react-redux'
 import {
-    storeShowChanStrip,
-    storeShowOptions,
-    storeShowMonitorOptions,
-    storeShowChanStripFull,
+    SettingsActionTypes,
 } from '../../../shared/src/actions/settingsActions'
-import { IFader } from '../../../shared/src/reducers/fadersReducer'
+import { Fader } from '../../../shared/src/reducers/fadersReducer'
 import {
     SOCKET_SET_FX,
     SOCKET_SET_AUX_LEVEL,
@@ -22,17 +19,17 @@ import ClassNames from 'classnames'
 import { fxParamsList } from '../../../shared/src/constants/MixerProtocolInterface'
 import { getFaderLabel } from '../utils/labels'
 
-interface IChanStripInjectProps {
+interface ChanStripInjectProps {
     label: string
     selectedProtocol: string
     numberOfChannelsInType: Array<number>
     channel: Array<any>
-    fader: Array<IFader>
+    fader: Array<Fader>
     auxSendIndex: number
     offtubeMode: boolean
 }
 
-interface IChanStripProps {
+interface ChanStripProps {
     faderIndex: number
 }
 
@@ -40,35 +37,24 @@ interface IChanStripProps {
 const DEL_VALUES = [10, 1, -1, -10]
 
 class ChanStrip extends React.PureComponent<
-    IChanStripProps & IChanStripInjectProps & Store
+    ChanStripProps & ChanStripInjectProps & Store
 > {
     constructor(props: any) {
         super(props)
     }
 
-    shouldComponentUpdate(nextProps: IChanStripInjectProps & IChanStripProps) {
-        if (nextProps.faderIndex > -1) {
-            return true
-        } else {
-            return false
-        }
-    }
 
-    handleShowRoutingOptions() {
-        this.props.dispatch(storeShowOptions(this.props.faderIndex))
-        this.props.dispatch(storeShowChanStrip(-1))
-    }
-
-    handleShowMonitorOptions() {
-        this.props.dispatch(storeShowMonitorOptions(this.props.faderIndex))
-        this.props.dispatch(storeShowChanStrip(-1))
-    }
     handleShowChStripFull() {
-        this.props.dispatch(storeShowChanStripFull(this.props.faderIndex))
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_CHAN_STRIP_FULL,
+            channel: this.props.faderIndex,
+        })
     }
     handleClose = () => {
-        this.props.dispatch(storeShowChanStrip(-1))
-    }
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_CHAN_STRIP,
+            channel: -1,
+        })        }
     handleInputSelect(selected: number) {
         window.socketIoClient.emit(SOCKET_SET_INPUT_SELECTOR, {
             faderIndex: this.props.faderIndex,
@@ -165,7 +151,6 @@ class ChanStrip extends React.PureComponent<
                 <div className="parameter-mini-text">{maxLabel + ' dB'}</div>
                 {window.mixerProtocol.channelTypes[0].toMixer
                     .CHANNEL_INPUT_GAIN ? (
-                    <React.Fragment>
                         <ReactSlider
                             className="chan-strip-fader"
                             thumbClassName="chan-strip-thumb"
@@ -182,7 +167,6 @@ class ChanStrip extends React.PureComponent<
                                 this.handleInputGain(event)
                             }}
                         />
-                    </React.Fragment>
                 ) : null}
                 <div className="parameter-mini-text">{minLabel + ' dB'}</div>
             </div>
@@ -202,9 +186,10 @@ class ChanStrip extends React.PureComponent<
             <React.Fragment>
                 {this.fxParamFader(fxParamsList.DelayTime)}
                 <div className="delayButtons">
-                    {DEL_VALUES.map((value: number) => {
+                    {DEL_VALUES.map((value: number, index: number) => {
                         return (
                             <button
+                                key={index}
                                 className="delayTime"
                                 onClick={() => {
                                     this.changeDelay(
@@ -360,7 +345,6 @@ class ChanStrip extends React.PureComponent<
                 <div className="parameters">
                     <div className="horizontal">
                         {hasInput && (
-                            <React.Fragment>
                                 <div className="item">
                                     <div className="title">INPUT</div>
                                     <div className="content">
@@ -368,10 +352,8 @@ class ChanStrip extends React.PureComponent<
                                         {this.inputGain()}
                                     </div>
                                 </div>
-                            </React.Fragment>
                         )}
                         {hasGainTrim && (
-                            <React.Fragment>
                                 <div className="item">
                                     <div className="title">INPUT</div>
                                     <div className="content">
@@ -380,10 +362,8 @@ class ChanStrip extends React.PureComponent<
                                         )}
                                     </div>
                                 </div>
-                            </React.Fragment>
                         )}
                         {hasComp && (
-                            <React.Fragment>
                                 <div className="item">
                                     <div className="title">COMPRESSOR</div>
                                     <div className="content">
@@ -398,17 +378,14 @@ class ChanStrip extends React.PureComponent<
                                         {this.gainReduction()}
                                     </div>
                                 </div>
-                            </React.Fragment>
                         )}
                         {hasDelay && (
-                            <React.Fragment>
                                 <div className="item">
                                     <div className="title">DELAY</div>
                                     <div className="content">
                                         {this.delay()}
                                     </div>
                                 </div>
-                            </React.Fragment>
                         )}
                     </div>
 
@@ -537,8 +514,8 @@ class ChanStrip extends React.PureComponent<
     }
 }
 
-const mapStateToProps = (state: any, props: any): IChanStripInjectProps => {
-    let inject: IChanStripInjectProps = {
+const mapStateToProps = (state: any, props: any): ChanStripInjectProps => {
+    let inject: ChanStripInjectProps = {
         label: '',
         selectedProtocol: state.settings[0].mixers[0].mixerProtocol,
         numberOfChannelsInType:
@@ -563,6 +540,6 @@ const mapStateToProps = (state: any, props: any): IChanStripInjectProps => {
     return inject
 }
 
-export default connect<any, IChanStripInjectProps>(mapStateToProps)(
+export default connect<any, ChanStripInjectProps>(mapStateToProps)(
     ChanStrip
 ) as any

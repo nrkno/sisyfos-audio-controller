@@ -1,7 +1,7 @@
-import { IMixerProtocol } from '../MixerProtocolInterface'
+import { MixerProtocol, MixerConnectionTypes } from '../MixerProtocolInterface'
 
-export const ArdourMaster: IMixerProtocol = {
-    protocol: 'OSC',
+export const ArdourMaster: MixerProtocol = {
+    protocol: MixerConnectionTypes.OSC,
     label: 'Ardour DAW - Master Mode',
     presetFileExtension: '',
     MAX_UPDATES_PER_SECOND: 10,

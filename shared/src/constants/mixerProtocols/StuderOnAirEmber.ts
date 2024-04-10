@@ -1,7 +1,7 @@
-import { IMixerProtocol, emptyMixerMessage } from '../MixerProtocolInterface'
+import { MixerProtocol, emptyMixerMessage, MixerConnectionTypes } from '../MixerProtocolInterface'
 
-export const StuderOnAirMaster: IMixerProtocol = {
-    protocol: 'STUDER',
+export const StuderOnAirMaster: MixerProtocol = {
+    protocol: MixerConnectionTypes.EMBER,
     label: 'Studer OnAir 3000',
     presetFileExtension: '',
     loadPresetCommand: [emptyMixerMessage()],

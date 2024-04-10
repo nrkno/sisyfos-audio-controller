@@ -16,13 +16,13 @@ import {
 
 import { I18nextProvider } from 'react-i18next'
 import i18n from './src/utils/i18n'
-import { IMixerProtocol } from '../shared/src/constants/MixerProtocolInterface'
+import { MixerProtocol } from '../shared/src/constants/MixerProtocolInterface'
 
 declare global {
     interface Window {
         storeRedux: any
         reduxState: any
-        mixerProtocol: IMixerProtocol
+        mixerProtocol: MixerProtocol
         mixerProtocolPresets: any
         mixerProtocolList: any
         socketIoClient: any
@@ -44,7 +44,12 @@ const unsubscribe = window.storeRedux.subscribe(() => {
     window.reduxState = window.storeRedux.getState()
 })
 
-window.socketIoClient = io()
+const { pathname } = window.location
+const socketServerPath =
+    pathname + (pathname.endsWith('/') ? '' : '/') + 'socket.io/'
+window.socketIoClient = io({
+    path: socketServerPath,
+})
 window.socketIoClient.emit(SOCKET_GET_SNAPSHOT_LIST)
 window.socketIoClient.emit(SOCKET_GET_CCG_LIST)
 window.socketIoClient.emit(SOCKET_GET_MIXER_PRESET_LIST)

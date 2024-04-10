@@ -2,13 +2,12 @@ import fs from 'fs'
 import path from 'path'
 
 import { logger } from './logger'
-import { ISettings } from '../../../shared/src/reducers/settingsReducer'
-import { getSnapShotList, IShotStorage } from './SettingsStorage'
+import { Settings } from '../../../shared/src/reducers/settingsReducer'
+import { getSnapShotList, ShotStorage, STORAGE_FOLDER } from './SettingsStorage'
 
 const version = process.env.npm_package_version
-const settingsPath: string = path.resolve(process.cwd(), 'storage')
 
-export const checkVersion = (currentSettings: ISettings): ISettings => {
+export const checkVersion = (currentSettings: Settings): Settings => {
     if (
         versionAsNumber(version) >
         versionAsNumber(currentSettings.sisyfosVersion)
@@ -18,7 +17,7 @@ export const checkVersion = (currentSettings: ISettings): ISettings => {
     return currentSettings
 }
 
-const migrateVersion = (currentSettings: ISettings): ISettings => {
+const migrateVersion = (currentSettings: Settings): Settings => {
     logger.info(
         `Migrating VERSION from ${currentSettings.sisyfosVersion} to ${version}`
     )
@@ -29,44 +28,45 @@ const migrateVersion = (currentSettings: ISettings): ISettings => {
     return newSettings
 }
 
-const migrate45to47 = (currentSettings: ISettings): ISettings => {
+const migrate45to47 = (currentSettings: Settings): Settings => {
     let files: string[] = getSnapShotList()
     files.push('default.shot')
 
     files.forEach((fileName: string) => {
-        let stateFromShot = JSON.parse(
-            fs.readFileSync(path.join(settingsPath, fileName), 'utf8')
-        )
-        // As this is the first implemented migration it also looks .shot files from ealier versions than 4.xx
-        if (stateFromShot.channelState.chConnection) {
-            // From Version 4.xx
-            stateFromShot.channelState.chMixerConnection =
-                stateFromShot.channelState?.chConnection
-            delete stateFromShot.channelState.chConnection
-        } else if (stateFromShot.channelState.channel) {
-            // Version lower than 4.0
-            stateFromShot.channelState.chMixerConnection = [
-                { channel: stateFromShot.channelState.channel },
-            ]
-            delete stateFromShot.channelState.channel
-        }
-        let migratedShot: IShotStorage = stateFromShot
         try {
+            let stateFromShot = JSON.parse(
+                fs.readFileSync(path.join(STORAGE_FOLDER, fileName), 'utf8')
+            )
+            // As this is the first implemented migration it also looks .shot files from ealier versions than 4.xx
+            if (stateFromShot.channelState.chConnection) {
+                // From Version 4.xx
+                stateFromShot.channelState.chMixerConnection =
+                    stateFromShot.channelState?.chConnection
+                delete stateFromShot.channelState.chConnection
+            } else if (stateFromShot.channelState.channel) {
+                // Version lower than 4.0
+                stateFromShot.channelState.chMixerConnection = [
+                    { channel: stateFromShot.channelState.channel },
+                ]
+                delete stateFromShot.channelState.channel
+            }
+            let migratedShot: ShotStorage = stateFromShot
+            
             fs.writeFileSync(
-                path.join(settingsPath, fileName),
+                path.join(STORAGE_FOLDER, fileName),
                 JSON.stringify(migratedShot),
                 'utf8'
             )
             logger.trace(`Snapshot ${fileName} Saved to storage folder`)
-        } catch (error: any) {
-            logger.data(error).error('Error saving Snapshot')
+        } catch (error) {
+            logger.data(error).error('Error migrating Snapshot')
         }
     })
     currentSettings.sisyfosVersion = version
     delete currentSettings.customPages
     try {
         fs.writeFileSync(
-            path.join(settingsPath, 'settings.json'),
+            path.join(STORAGE_FOLDER, 'settings.json'),
             JSON.stringify(currentSettings),
             'utf8'
         )

@@ -6,31 +6,33 @@ import net from 'net'
 //Utils:
 import {
     fxParamsList,
-    IMixerProtocol,
+    MixerProtocol,
 } from '../../../../shared/src/constants/MixerProtocolInterface'
 import { logger } from '../logger'
-import { storeSetMixerOnline } from '../../../../shared/src/actions/settingsActions'
 import {
-    storeFaderLevel,
-    storeSetMute,
-    storeTogglePgm,
+    SettingsActionTypes,
+} from '../../../../shared/src/actions/settingsActions'
+import {
+    FaderActionTypes,
 } from '../../../../shared/src/actions/faderActions'
 import {
-    storeSetAuxLevel,
-    storeSetOutputLevel,
+    ChannelActionTypes,
 } from '../../../../shared/src/actions/channelActions'
 import { remoteConnections } from '../../mainClasses'
-import { IChannelReference, IFader } from '../../../../shared/src/reducers/fadersReducer'
-import { IChannel } from '../../../../shared/src/reducers/channelsReducer'
+import {
+    ChannelReference,
+    Fader,
+} from '../../../../shared/src/reducers/fadersReducer'
+import { Channel } from '../../../../shared/src/reducers/channelsReducer'
 
 export class StuderVistaMixerConnection {
-    mixerProtocol: IMixerProtocol
+    mixerProtocol: MixerProtocol
     mixerIndex: number
     deviceRoot: any
     emberNodeObject: Array<any>
     mixerConnection: any
 
-    constructor(mixerProtocol: IMixerProtocol, mixerIndex: number) {
+    constructor(mixerProtocol: MixerProtocol, mixerIndex: number) {
         this.sendOutMessage = this.sendOutMessage.bind(this)
         this.pingMixerCommand = this.pingMixerCommand.bind(this)
 
@@ -50,7 +52,7 @@ export class StuderVistaMixerConnection {
                 host: state.settings[0].mixers[this.mixerIndex].deviceIp,
                 timeout: 1000,
             },
-            () => { }
+            () => {}
         )
 
         this.mixerConnection
@@ -126,7 +128,7 @@ export class StuderVistaMixerConnection {
     findChannelInArray(channelType: number, channelTypeIndex: number): number {
         let channelArrayIndex = 0
         state.channels[0].chMixerConnection[this.mixerIndex].channel.forEach(
-            (channel: IChannel, index: number) => {
+            (channel: Channel, index: number) => {
                 if (
                     channel.channelType === channelType &&
                     channel.channelTypeIndex === channelTypeIndex
@@ -139,9 +141,12 @@ export class StuderVistaMixerConnection {
     }
 
     private getAssignedFaderIndex(channelIndex: number) {
-        return state.faders[0].fader.findIndex(
-            (fader: IFader) => fader.assignedChannels?.some((assigned: IChannelReference) => {
-                return (assigned.mixerIndex === this.mixerIndex && assigned.channelIndex === channelIndex)
+        return state.faders[0].fader.findIndex((fader: Fader) =>
+            fader.assignedChannels?.some((assigned: ChannelReference) => {
+                return (
+                    assigned.mixerIndex === this.mixerIndex &&
+                    assigned.channelIndex === channelIndex
+                )
             })
         )
     }
@@ -205,23 +210,33 @@ export class StuderVistaMixerConnection {
             state.faders[0].fader[assignedFaderIndex].pgmOn ||
             state.faders[0].fader[assignedFaderIndex].voOn
         ) {
-            store.dispatch(storeFaderLevel(assignedFaderIndex, value))
+            store.dispatch({
+                type: FaderActionTypes.SET_FADER_LEVEL,
+                faderIndex: assignedFaderIndex,
+                level: value,
+            })
             state.faders[0].fader[assignedFaderIndex].assignedChannels?.forEach(
-                (assignedChannel: IChannelReference) => {
+                (assignedChannel: ChannelReference) => {
                     if (
                         assignedChannel.mixerIndex === this.mixerIndex &&
                         assignedChannel.channelIndex !== channelArrayIndex
                     ) {
-                        store.dispatch(
-                            storeSetOutputLevel(this.mixerIndex, assignedChannel.channelIndex, value)
-                        )
+                        store.dispatch({
+                            type: ChannelActionTypes.SET_OUTPUT_LEVEL,
+                            mixerIndex: this.mixerIndex,
+                            channel: assignedChannel.channelIndex,
+                            level: value,
+                        })
                     }
                 }
             )
 
             if (!state.faders[0].fader[assignedFaderIndex].pgmOn) {
                 if (value > 0) {
-                    store.dispatch(storeTogglePgm(assignedFaderIndex))
+                    store.dispatch({
+                        type: FaderActionTypes.TOGGLE_PGM,
+                        faderIndex: assignedFaderIndex,
+                    })
                 }
             }
             global.mainThreadHandler.updatePartialStore(assignedFaderIndex)
@@ -252,14 +267,13 @@ export class StuderVistaMixerConnection {
             channelTypeIndex
         )
 
-        store.dispatch(
-            storeSetAuxLevel(
-                this.mixerIndex,
-                channelArrayIndex,
-                auxIndex,
-                value
-            )
-        )
+        store.dispatch({
+            type: ChannelActionTypes.SET_AUX_LEVEL,
+            mixerIndex: this.mixerIndex,
+            channel: channelArrayIndex,
+            auxIndex: auxIndex,
+            level: value,
+        })
 
         global.mainThreadHandler.updateFullClientStore()
         remoteConnections.updateRemoteAuxPanels()
@@ -281,9 +295,15 @@ export class StuderVistaMixerConnection {
                 : false
 
         // Update store:
-        let assignedFader = this.getAssignedFaderIndex(this.findChannelInArray(channelType, channelTypeIndex))
+        let assignedFader = this.getAssignedFaderIndex(
+            this.findChannelInArray(channelType, channelTypeIndex)
+        )
 
-        store.dispatch(storeSetMute(assignedFader, mute))
+        store.dispatch({
+            type: FaderActionTypes.SET_MUTE,
+            faderIndex: assignedFader,
+            muteOn: mute,
+        })
         global.mainThreadHandler.updatePartialStore(assignedFader)
     }
 
@@ -349,7 +369,11 @@ export class StuderVistaMixerConnection {
     }
 
     mixerOnline(onLineState: boolean) {
-        store.dispatch(storeSetMixerOnline(this.mixerIndex, onLineState))
+        store.dispatch({
+            type: SettingsActionTypes.SET_MIXER_ONLINE,
+            mixerIndex: this.mixerIndex,
+            mixerOnline: onLineState,
+        })
         global.mainThreadHandler.updateMixerOnline(this.mixerIndex)
     }
 
@@ -371,35 +395,39 @@ export class StuderVistaMixerConnection {
     }
 
     pingChannel(mixerMessage: string) {
-        state.faders[0].fader.forEach((fader: IFader, index: number) => {
-            fader.assignedChannels?.forEach((channelReference: IChannelReference) => {
-                if (channelReference.mixerIndex === this.mixerIndex) {
-                    const channel = state.channels[0].chMixerConnection[
-                        this.mixerIndex
-                    ].channel[channelReference.channelIndex]
-                    let message = mixerMessage
-                        .replace(
-                            '{ch-type}',
-                            (channel.channelType + 1 + 160).toString(16)
-                        )
-                        .replace(
-                            '{channel}',
-                            (channel.channelTypeIndex + 1 + 160).toString(16)
-                        )
-                    if (message.includes('{aux}')) {
-                        this.pingAuxSend(message)
-                    } else {
-                        let hexArray = message.split(' ')
-                        let buf = Buffer.from(
-                            hexArray.map((val: string) => {
-                                return parseInt(val, 16)
-                            })
-                        )
-                        // logger.debug(`Pinging: ${buf}`)
-                        this.mixerConnection.write(buf)
+        state.faders[0].fader.forEach((fader: Fader, index: number) => {
+            fader.assignedChannels?.forEach(
+                (channelReference: ChannelReference) => {
+                    if (channelReference.mixerIndex === this.mixerIndex) {
+                        const channel =
+                            state.channels[0].chMixerConnection[this.mixerIndex]
+                                .channel[channelReference.channelIndex]
+                        let message = mixerMessage
+                            .replace(
+                                '{ch-type}',
+                                (channel.channelType + 1 + 160).toString(16)
+                            )
+                            .replace(
+                                '{channel}',
+                                (channel.channelTypeIndex + 1 + 160).toString(
+                                    16
+                                )
+                            )
+                        if (message.includes('{aux}')) {
+                            this.pingAuxSend(message)
+                        } else {
+                            let hexArray = message.split(' ')
+                            let buf = Buffer.from(
+                                hexArray.map((val: string) => {
+                                    return parseInt(val, 16)
+                                })
+                            )
+                            // logger.debug(`Pinging: ${buf}`)
+                            this.mixerConnection.write(buf)
+                        }
                     }
                 }
-            })
+            )
         })
     }
 
@@ -634,9 +662,17 @@ export class StuderVistaMixerConnection {
         return
     }
 
-    loadMixerPreset(presetName: string) { }
+    loadMixerPreset(presetName: string) {}
 
     injectCommand(command: string[]) {
         return true
     }
+
+    updateAMixState(channelIndex: number, amixOn: boolean) {}
+
+    updateChannelSetting(
+        channelIndex: number,
+        setting: string,
+        value: string
+    ) {}
 }

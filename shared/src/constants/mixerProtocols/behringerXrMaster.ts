@@ -1,7 +1,7 @@
-import { IMixerProtocol } from '../MixerProtocolInterface'
+import { MixerProtocol, MixerConnectionTypes } from '../MixerProtocolInterface'
 
-export const BehringerXrMaster: IMixerProtocol = {
-    protocol: 'OSC',
+export const BehringerXrMaster: MixerProtocol = {
+    protocol: MixerConnectionTypes.OSC,
     label: 'Behringer XR-series / Midas MR-series',
     presetFileExtension: '',
     MAX_UPDATES_PER_SECOND: 10,

@@ -1,12 +1,13 @@
 import {
-    ICasparCGMixerGeometry,
-    ICasparCGMixerGeometryFile,
+    CasparCGMixerGeometry,
+    CasparCGMixerGeometryFile,
+    MixerConnectionTypes
 } from '../MixerProtocolInterface'
 
 // TODO: This is just template data to avoid error if not loading
 // default.caspar.ccg from storage folder
 // should be simplified when storage is tested on new installations.
-let geometry: ICasparCGMixerGeometryFile = {
+let geometry: CasparCGMixerGeometryFile = {
     label: 'Sofie CasparCG Example',
     fromMixer: {
         CHANNEL_VU: [
@@ -100,8 +101,8 @@ let geometry: ICasparCGMixerGeometryFile = {
     },
 }
 
-let CasparCGMasterObject: ICasparCGMixerGeometry = {
-    protocol: 'CasparCG',
+let CasparCGMasterObject: CasparCGMixerGeometry = {
+    protocol: MixerConnectionTypes.CasparCG,
     label: `CasparCG Audio Mixer`,
     presetFileExtension: '',
     MAX_UPDATES_PER_SECOND: 10,

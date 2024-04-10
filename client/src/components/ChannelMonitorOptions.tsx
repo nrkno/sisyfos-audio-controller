@@ -4,8 +4,8 @@ import ClassNames from 'classnames'
 import '../assets/css/ChannelMonitorOptions.css'
 import { Store } from 'redux'
 import { connect } from 'react-redux'
-import { storeShowMonitorOptions } from '../../../shared/src/actions/settingsActions'
-import { ISettings } from '../../../shared/src/reducers/settingsReducer'
+import { SettingsActionTypes } from '../../../shared/src/actions/settingsActions'
+import { Settings } from '../../../shared/src/reducers/settingsReducer'
 import {
     SOCKET_SET_AUX_LEVEL,
     SOCKET_SET_FADER_MONITOR,
@@ -13,21 +13,21 @@ import {
 } from '../../../shared/src/constants/SOCKET_IO_DISPATCHERS'
 import { getFaderLabel } from '../utils/labels'
 
-interface IMonitorSettingsInjectProps {
+interface MonitorSettingsInjectProps {
     label: string
     selectedProtocol: string
     numberOfChannelsInType: Array<number>
     channel: Array<any>
     fader: Array<any>
-    settings: ISettings
+    settings: Settings
 }
 
-interface IChannelProps {
+interface ChannelProps {
     faderIndex: number
 }
 
 class ChannelMonitorOptions extends React.PureComponent<
-    IChannelProps & IMonitorSettingsInjectProps & Store
+    ChannelProps & MonitorSettingsInjectProps & Store
 > {
     faderIndex: number
 
@@ -113,7 +113,10 @@ class ChannelMonitorOptions extends React.PureComponent<
     }
 
     handleClose = () => {
-        this.props.dispatch(storeShowMonitorOptions(this.faderIndex))
+        this.props.dispatch({
+            type: SettingsActionTypes.TOGGLE_SHOW_MONITOR_OPTIONS,
+            channel: this.faderIndex,
+        })
     }
 
     render() {
@@ -139,6 +142,7 @@ class ChannelMonitorOptions extends React.PureComponent<
                 <hr />
                 <label className="input">MONITOR AUX SEND :</label>
                 <input
+                    title='Set the Aux Send for the monitor. Set to -1 to disable monitoring'
                     className="input-field"
                     value={this.props.fader[this.faderIndex].monitor}
                     onChange={(event) => this.handleSetAux(event)}
@@ -146,6 +150,7 @@ class ChannelMonitorOptions extends React.PureComponent<
                 <br />
                 <label className="input">SHOW IN MINI MONITORVIEW :</label>
                 <input
+                    title='Show this channel in the Mini MonitorView'
                     type="checkbox"
                     checked={
                         this.props.fader[this.faderIndex].showInMiniMonitor
@@ -168,6 +173,7 @@ class ChannelMonitorOptions extends React.PureComponent<
                         >
                             {' Channel ' + (index + 1) + ' : '}
                             <input
+                                title='Enable monitoring of this channel'
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={(event) =>
@@ -186,7 +192,7 @@ class ChannelMonitorOptions extends React.PureComponent<
 const mapStateToProps = (
     state: any,
     props: any
-): IMonitorSettingsInjectProps => {
+): MonitorSettingsInjectProps => {
     return {
         label: getFaderLabel(props.faderIndex, 'FADER'),
         selectedProtocol: state.settings[0].mixers[0].mixerProtocol,
@@ -198,6 +204,6 @@ const mapStateToProps = (
     }
 }
 
-export default connect<any, IMonitorSettingsInjectProps>(mapStateToProps)(
+export default connect<any, MonitorSettingsInjectProps>(mapStateToProps)(
     ChannelMonitorOptions
 ) as any
